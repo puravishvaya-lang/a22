@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alite AI Pro</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --panel: #1e293b;
+            --accent: #3b82f6;
+            --text: #f8fafc;
+            --border: #334155;
+            --btn-dark: #0f172a;
+            --chat-max-width: 950px;
+            --ui-scale: 1;
+        }
+
+        body {
+            margin: 0; font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg); color: var(--text); overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        /* --- HEADER & NAVIGATION --- */
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 20px; background: rgba(30, 41, 59, 0.9);
+            backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
+            height: 60px; z-index: 1001;
+        }
+
+        .nav-buttons { display: flex; gap: 10px; }
+
+        .dropdown-container { position: relative; display: inline-block; }
+        .dropdown-content {
+            display: none; position: absolute; right: 0; background: var(--panel);
+            min-width: 180px; border: 1px solid var(--border); border-radius: 12px; 
+            z-index: 100; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            padding: 8px 0;
+        }
+        .dropdown-content a, .dropdown-content label {
+            color: white; padding: 12px 16px; text-decoration: none; display: block; 
+            font-size: 13px; cursor: pointer; transition: 0.2s;
+        }
+        .dropdown-content a:hover, .dropdown-content label:hover { background: var(--accent); }
+        .show { display: block; }
+
+        /* --- SETTINGS SPECIFIC --- */
+        .settings-group { border-top: 1px solid var(--border); margin-top: 5px; padding-top: 5px; }
+        .settings-title { font-size: 10px; color: #64748b; padding: 5px 16px; text-transform: uppercase; }
+
+        /* --- AUTH OVERLAY --- */
+        #auth-overlay {
+            position: fixed; inset: 0; background: var(--bg); z-index: 2000;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .auth-box { background: var(--panel); padding: 30px; border-radius: 15px; text-align: center; width: 300px; }
+        .auth-input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid var(--border); background: var(--bg); color: white; box-sizing: border-box; }
+
+        /* --- CHAT AREA --- */
+        #chat-window { 
+            width: 100%; height: calc(100vh - 60px); display: flex; flex-direction: column; 
+            max-width: var(--chat-max-width); margin: auto; transition: max-width 0.3s;
+        }
+        #messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+
+        .msg.u { align-self: flex-end; background: var(--accent); color: white; padding: 12px 18px; border-radius: 20px 20px 5px 20px; max-width: 75%; font-size: calc(14px * var(--ui-scale)); }
+        .msg.a { align-self: flex-start; color: #cbd5e1; padding: 10px 0; max-width: 85%; font-size: calc(14px * var(--ui-scale)); line-height: 1.6; }
+
+        /* --- TOOLS PANEL --- */
+        .tools-box {
+            display: flex; gap: 8px; overflow-x: auto; padding: 10px 15px;
+            background: rgba(30, 41, 59, 0.5); border-top: 1px solid var(--border);
+        }
+        .tool-btn {
+            white-space: nowrap; background: var(--btn-dark); border: 1px solid var(--border);
+            color: #94a3b8; padding: calc(8px * var(--ui-scale)) calc(15px * var(--ui-scale)); 
+            border-radius: 12px; font-size: calc(11px * var(--ui-scale)); cursor: pointer;
+        }
+
+        /* --- INPUT --- */
+        .input-area-container { padding: 12px; background: var(--panel); border-radius: 24px; margin: 10px 15px 20px; border: 1px solid var(--border); }
+        textarea { width: 100%; background: transparent; border: none; color: white; outline: none; font-size: 15px; resize: none; height: 50px; }
+        
+        .action-btn { background: var(--btn-dark); border: 1px solid var(--border); color: #94a3b8; padding: 6px 14px; border-radius: 20px; font-size: 11px; cursor: pointer; }
+        .send-icon-btn { background: var(--accent); border: none; color: white; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; }
+
+        /* --- MODES --- */
+        body.mobile-mode { --chat-max-width: 100%; --ui-scale: 0.9; }
+        body.tablet-mode { --chat-max-width: 700px; --ui-scale: 1; }
+        body.computer-mode { --chat-max-width: 1000px; --ui-scale: 1.1; }
+
+    </style>
+</head>
+<body class="computer-mode">
+
+    <div id="auth-overlay">
+        <div class="auth-box">
+            <h2 style="color: var(--accent);">Welcome</h2>
+            <p style="font-size: 12px; color: #94a3b8;">Alite AI Pro ලියාපදිංචි වන්න</p>
+            <input type="text" id="userName" class="auth-input" placeholder="ඔබේ නම...">
+            <button class="action-btn" style="width: 100%; padding: 12px; background: var(--accent); color:white;" onclick="register()">Register / Login</button>
+        </div>
+    </div>
+
+    <header>
+        <div style="font-weight: bold; color: var(--accent);">Alite AI <span style="color:white">Pro</span></div>
+        <div class="nav-buttons">
+            <div class="dropdown-container">
+                <button class="action-btn" onclick="toggleDropdown('settingsDrop')">⚙️ Settings</button>
+                <div id="settingsDrop" class="dropdown-content">
+                    <div class="settings-title">View Mode</div>
+                    <a onclick="setMode('mobile')">📱 Mobile View</a>
+                    <a onclick="setMode('tablet')">📟 Tablet View</a>
+                    <a onclick="setMode('computer')">💻 Computer View</a>
+                </div>
+            </div>
+            <div class="dropdown-container">
+                <button class="action-btn" onclick="toggleDropdown('menuDrop')">Menu ☰</button>
+                <div id="menuDrop" class="dropdown-content">
+                    <a onclick="alert('Alite AI v3.0 - Sri Lanka')">ℹ️ About</a>
+                    <a onclick="alert('All systems operational')">🛡️ Privacy</a>
+                    <div class="settings-group">
+                        <a style="color: #ef4444;" onclick="logout()">Logout 🚪</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div id="chat-window">
+        <div id="messages">
+            <div class="msg a">ආයුබෝවන් <span id="display-name">User</span>! Settings හරහා ඔබට අවශ්‍ය Device Mode එක තෝරාගත හැක.</div>
+        </div>
+
+        <div class="tools-box">
+            <button class="tool-btn" onclick="toggleImageMode()">🖼️ Create Image</button>
+            <button class="tool-btn" onclick="alert('Coming soon...')">🎬 Video Gen</button>
+            <button class="tool-btn" onclick="alert('Coming soon...')">🎵 Music Gen</button>
+            <button class="tool-btn" onclick="alert('Coming soon...')">🔎 Deep Research</button>
+            <button class="tool-btn" onclick="alert('Coming soon...')">💻 Code</button>
+        </div>
+
+        <div class="input-area-container">
+            <textarea id="userInput" placeholder="පණිවිඩයක් යවන්න..."></textarea>
+            <div class="bottom-action-bar" style="display:flex; justify-content:space-between; align-items:center;">
+                <button class="action-btn" onclick="document.getElementById('fileInput').click()">+ ADD FILES</button>
+                <button class="send-icon-btn" onclick="askAI()">➤</button>
+            </div>
+        </div>
+    </div>
+
+    <input type="file" id="fileInput" style="display: none;">
+
+    <script>
+        const API_KEY = "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";
+        
+        window.onload = function() {
+            const user = localStorage.getItem("aliteUser");
+            if(user) {
+                document.getElementById("auth-overlay").style.display = "none";
+                document.getElementById("display-name").innerText = user;
+            }
+            // Load saved mode
+            const savedMode = localStorage.getItem("uiMode") || 'computer';
+            setMode(savedMode);
+        }
+
+        function register() {
+            const name = document.getElementById("userName").value;
+            if(name.trim() === "") return alert("නම ඇතුළත් කරන්න");
+            localStorage.setItem("aliteUser", name);
+            location.reload();
+        }
+
+        function logout() {
+            localStorage.removeItem("aliteUser");
+            location.reload();
+        }
+
+        function toggleDropdown(id) {
+            // Close other dropdowns
+            document.querySelectorAll('.dropdown-content').forEach(d => {
+                if(d.id !== id) d.classList.remove('show');
+            });
+            document.getElementById(id).classList.toggle("show");
+        }
+
+        function setMode(mode) {
+            document.body.className = mode + '-mode';
+            localStorage.setItem("uiMode", mode);
+            // Hide dropdown after selection
+            document.getElementById('settingsDrop').classList.remove('show');
+        }
+
+        async function askAI() {
+            const input = document.getElementById("userInput");
+            const text = input.value.trim();
+            if(!text) return;
+
+            const box = document.getElementById("messages");
+            box.innerHTML += `<div class="msg u">${text}</div>`;
+            input.value = "";
+            
+            const aiDiv = document.createElement("div");
+            aiDiv.className = "msg a";
+            aiDiv.innerText = "සිතමින් සිටී...";
+            box.appendChild(aiDiv);
+            box.scrollTop = box.scrollHeight;
+
+            try {
+                const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                    method: "POST",
+                    headers: { "Authorization": "Bearer " + API_KEY, "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                        model: "llama-3.1-8b-instant", 
+                        messages: [{role: "user", content: text}] 
+                    })
+                });
+                const data = await res.json();
+                aiDiv.innerHTML = data.choices[0].message.content.replace(/\n/g, '<br>');
+            } catch (e) {
+                aiDiv.innerText = "Error.";
+            }
+            box.scrollTop = box.scrollHeight;
+        }
+
+        // Close dropdowns when clicking outside
+        window.onclick = function(event) {
+            if (!event.target.matches('.action-btn')) {
+                document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
+            }
+        }
+    </script>
+</body>
+</html>
